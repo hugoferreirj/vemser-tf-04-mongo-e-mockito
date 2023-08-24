@@ -7,6 +7,7 @@ import br.com.dbc.wbhealth.model.dto.usuario.UsuarioOutputDTO;
 import br.com.dbc.wbhealth.model.dto.usuario.UsuarioSenhaInputDTO;
 import br.com.dbc.wbhealth.model.entity.CargoEntity;
 import br.com.dbc.wbhealth.model.entity.UsuarioEntity;
+import br.com.dbc.wbhealth.model.enumarator.Descricao;
 import br.com.dbc.wbhealth.repository.UsuarioRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -65,7 +66,8 @@ public class UsuarioService {
 
         UsuarioEntity usuarioEntity = convertInputToUsuario(usuarioInput);
         usuarioEntity.setSenha(senhaCriptografada);
-        logService.create("Novo usuário criado.", getIdLoggedUser());
+
+        logService.create(Descricao.CREATE, getIdLoggedUser());
         return convertUsuarioToOutput(usuarioRepository.save(usuarioEntity));
     }
 
@@ -85,6 +87,7 @@ public class UsuarioService {
 
             UsuarioEntity usuarioAtualizado = usuarioRepository.save(usuarioDesatualizado);
 
+            logService.create(Descricao.UPDATE, getIdLoggedUser());
             return convertUsuarioToOutput(usuarioAtualizado);
         } catch (RegraDeNegocioException e) {
             throw new RuntimeException(e);
@@ -96,11 +99,13 @@ public class UsuarioService {
         String senhaCriptografada = passwordEncoder.encode(usuarioSenhaInput.getSenha());
         usuarioParaEditar.setSenha(senhaCriptografada);
         usuarioRepository.save(usuarioParaEditar);
+        logService.create(Descricao.UPDATE, getIdLoggedUser());
     }
 
     public void remove(Integer idUsuario) throws EntityNotFound {
         UsuarioEntity usuario = findById(idUsuario);
         usuarioRepository.delete(usuario);
+        logService.create(Descricao.DELETE, getIdLoggedUser());
     }
 
     public UsuarioEntity convertInputToUsuario(UsuarioInputDTO usuarioInputDTO) throws EntityNotFound {
@@ -144,5 +149,8 @@ public class UsuarioService {
         return usuarioInput;
     }
 
+    public void criarLogDeLogin(Integer idUsuario){
+        logService.create(Descricao.LOGIN, idUsuario);
+    }
 }
 

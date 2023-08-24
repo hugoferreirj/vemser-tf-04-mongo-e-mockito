@@ -1,4 +1,3 @@
--- Criar DB e collection
+-- Criar DB
 
 use wbhealth
-db.createCollection("logs")
