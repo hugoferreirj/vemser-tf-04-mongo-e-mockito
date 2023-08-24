@@ -5,12 +5,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
-import org.springframework.data.mongodb.core.mapping.FieldType;
 
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.Id;
+import org.springframework.data.annotation.Id;
 import java.time.LocalDateTime;
 
 @Getter
@@ -19,7 +17,6 @@ import java.time.LocalDateTime;
 @Document(collection = "logs")
 public class LogEntity {
     @Id
-    @Field(targetType = FieldType.OBJECT_ID)
     private String idLog;
 
     private Integer idUsuario;
