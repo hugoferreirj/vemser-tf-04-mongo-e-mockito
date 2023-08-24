@@ -14,14 +14,14 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @Document
-public class Log {
+public class LogEntity {
     @Id
     @Field(targetType = FieldType.OBJECT_ID)
     private String idLog;
 
     private Integer idUsuario;
 
-    private LocalDateTime dataHoraLogin;
+    private LocalDateTime dataHora;
 
     private String descricao;
 }
