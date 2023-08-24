@@ -13,14 +13,8 @@ import java.util.stream.Collectors;
 public class RelatorioLogService {
     private final LogRepository logRepository;
 
-    //    public List<RelatorioLogOutputDTO> groupByTipoLogAndCount() {
-//        return logRepository.groupByDescricaoAndCount().stream().map(log -> {
-//            return new RelatorioLogOutputDTO(log.getDescricao(), log.getQuantidade());
-//        }).collect(Collectors.toList());
-//    }
-    public List<RelatorioLogOutputDTO> groupByTipoLogAndCount() {
+    public List<RelatorioLogOutputDTO> groupByDescricaoAndCount() {
         return logRepository.groupByDescricaoAndCount().stream().map(log -> {
-            System.out.println("Valor de descricao: " + log.getDescricao()); // Adicione esta linha
             return new RelatorioLogOutputDTO(log.getDescricao(), log.getQuantidade());
         }).collect(Collectors.toList());
     }

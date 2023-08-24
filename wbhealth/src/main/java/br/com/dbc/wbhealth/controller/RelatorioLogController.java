@@ -18,7 +18,7 @@ public class RelatorioLogController {
     private final RelatorioLogService relatorioLogService;
 
     @GetMapping("/group-and-count")
-    public ResponseEntity<List<RelatorioLogOutputDTO>> groupByTipoLogAndCount() {
-        return ResponseEntity.status(HttpStatus.OK).body(relatorioLogService.groupByTipoLogAndCount());
+    public ResponseEntity<List<RelatorioLogOutputDTO>> groupByDescricaoAndCount() {
+        return ResponseEntity.status(HttpStatus.OK).body(relatorioLogService.groupByDescricaoAndCount());
     }
 }

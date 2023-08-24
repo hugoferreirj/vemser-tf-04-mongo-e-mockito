@@ -33,7 +33,7 @@ public class SecurityConfiguration {
                 .and().cors()
                 .and().csrf().disable()
                 .authorizeHttpRequests((authz) -> authz
-                        .antMatchers("/", "/auth", "/auth/login", "/relatorio-log/**").permitAll()
+                        .antMatchers("/", "/auth", "/auth/login").permitAll()
                         .antMatchers("/auth/create-user").hasRole(ADMIN)
                         .antMatchers("/auth/update-password").hasAnyRole(PACIENTE, MEDICO, ADMIN)
                         .antMatchers(HttpMethod.GET, "/medico/**/atendimentos").hasAnyRole(MEDICO, RECEPCAO, ADMIN)
