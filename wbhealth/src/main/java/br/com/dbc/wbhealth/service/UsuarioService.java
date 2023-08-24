@@ -27,6 +27,7 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
     private final CargoService cargoService;
     private final ObjectMapper objectMapper;
+    private final LogService logService;
 
     public UsuarioEntity findById(Integer idUsuario) throws EntityNotFound {
         return usuarioRepository.findById(idUsuario)
@@ -64,7 +65,7 @@ public class UsuarioService {
 
         UsuarioEntity usuarioEntity = convertInputToUsuario(usuarioInput);
         usuarioEntity.setSenha(senhaCriptografada);
-
+        logService.create("Novo usuário criado.", getIdLoggedUser());
         return convertUsuarioToOutput(usuarioRepository.save(usuarioEntity));
     }
 

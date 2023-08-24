@@ -28,6 +28,7 @@ public class AuthController implements AuthControllerDoc {
     private final TokenService tokenService;
     private final UsuarioService usuarioService;
 
+
     @GetMapping
     public ResponseEntity<UsuarioOutputDTO> getLoggedUser() throws RegraDeNegocioException, EntityNotFound {
         return new ResponseEntity<>(usuarioService.getLoggedUser(), HttpStatus.OK);
