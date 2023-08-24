@@ -3,15 +3,21 @@ package br.com.dbc.wbhealth.service;
 import br.com.dbc.wbhealth.exceptions.EntityNotFound;
 import br.com.dbc.wbhealth.exceptions.RegraDeNegocioException;
 import br.com.dbc.wbhealth.model.dto.usuario.UsuarioInputDTO;
+import br.com.dbc.wbhealth.model.dto.usuario.UsuarioLoginInputDTO;
 import br.com.dbc.wbhealth.model.dto.usuario.UsuarioOutputDTO;
 import br.com.dbc.wbhealth.model.dto.usuario.UsuarioSenhaInputDTO;
 import br.com.dbc.wbhealth.model.entity.CargoEntity;
 import br.com.dbc.wbhealth.model.entity.UsuarioEntity;
 import br.com.dbc.wbhealth.model.enumarator.Descricao;
 import br.com.dbc.wbhealth.repository.UsuarioRepository;
+import br.com.dbc.wbhealth.security.TokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -55,6 +61,26 @@ public class UsuarioService {
     public UsuarioOutputDTO getLoggedUser() throws RegraDeNegocioException, EntityNotFound {
         UsuarioEntity usuario = findById(getIdLoggedUser());
         return convertUsuarioToOutput(usuario);
+    }
+
+    public String login(UsuarioLoginInputDTO usuarioLoginInput,
+                        AuthenticationManager authenticationManager,
+                        TokenService tokenService) throws RegraDeNegocioException {
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(usuarioLoginInput.getLogin(), usuarioLoginInput.getSenha());
+
+        Authentication authentication;
+        try{
+            authentication = authenticationManager.authenticate(authenticationToken);
+        } catch (AuthenticationException e) {
+            throw new RegraDeNegocioException("Usuário ou senha inválidos");
+        }
+
+        UsuarioEntity usuarioValidado = (UsuarioEntity) authentication.getPrincipal();
+        String tokenGerado = tokenService.generateToken(usuarioValidado);
+
+        logService.create(Descricao.LOGIN, usuarioValidado.getIdUsuario());
+        return tokenGerado;
     }
 
     public UsuarioOutputDTO create(UsuarioInputDTO usuarioInput) throws EntityNotFound, RegraDeNegocioException {
@@ -149,8 +175,5 @@ public class UsuarioService {
         return usuarioInput;
     }
 
-    public void criarLogDeLogin(Integer idUsuario){
-        logService.create(Descricao.LOGIN, idUsuario);
-    }
 }
 
