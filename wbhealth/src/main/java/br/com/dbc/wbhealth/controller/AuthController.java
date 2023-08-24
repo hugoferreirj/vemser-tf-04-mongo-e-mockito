@@ -28,7 +28,6 @@ public class AuthController implements AuthControllerDoc {
     private final TokenService tokenService;
     private final UsuarioService usuarioService;
 
-
     @GetMapping
     public ResponseEntity<UsuarioOutputDTO> getLoggedUser() throws RegraDeNegocioException, EntityNotFound {
         return new ResponseEntity<>(usuarioService.getLoggedUser(), HttpStatus.OK);
@@ -50,6 +49,7 @@ public class AuthController implements AuthControllerDoc {
         UsuarioEntity usuarioValidado = (UsuarioEntity) authentication.getPrincipal();
         String tokenGerado = tokenService.generateToken(usuarioValidado);
 
+        usuarioService.criarLogDeLogin(usuarioValidado.getIdUsuario());
         return new ResponseEntity<>(tokenGerado, HttpStatus.OK);
     }
 
