@@ -5,13 +5,14 @@ import br.com.dbc.wbhealth.model.entity.LogEntity;
 import br.com.dbc.wbhealth.model.enumarator.Descricao;
 import br.com.dbc.wbhealth.repository.LogRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.data.domain.Sort;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,9 +28,10 @@ public class LogService {
         logRepository.save(entity);
     }
 
-    public List<LogOutputDTO> findAll() {
-        Sort sortByDateDesc = Sort.by(Sort.Direction.DESC, "dataHora");
+    public Page<LogOutputDTO> findAll(Integer page, Integer quantidadesLog) {
+        Pageable pageable = PageRequest.of(page, quantidadesLog, Sort.Direction.DESC, "dataHora");
+        Page<LogEntity> logPage = logRepository.findAll(pageable);
+        return logPage.map(log -> objectMapper.convertValue(log, LogOutputDTO.class));
 
-        return logRepository.findAll(sortByDateDesc).stream().map(log -> objectMapper.convertValue(log, LogOutputDTO.class)).collect(Collectors.toList());
     }
 }

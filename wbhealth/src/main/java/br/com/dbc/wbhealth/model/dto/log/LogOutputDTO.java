@@ -10,8 +10,7 @@ import java.time.LocalDateTime;
 @Data
 public class LogOutputDTO {
 
-    @BsonId()
-    private ObjectId id;
+    private String idLog;
 
     private Integer idUsuario;
 
