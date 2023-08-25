@@ -101,7 +101,7 @@ public class UsuarioService {
         try {
             UsuarioEntity usuarioDesatualizado = findById(idUsuario);
             if (usuarioRepository.existsByLogin(usuarioInput.getLogin())) {
-                if (usuarioDesatualizado.getLogin() != usuarioInput.getLogin()) {
+                if (!usuarioDesatualizado.getLogin().equals(usuarioInput.getLogin())) {
                     throw new RegraDeNegocioException("Nome de usuário é utilizado por outro usuário.");
                 }
             }
