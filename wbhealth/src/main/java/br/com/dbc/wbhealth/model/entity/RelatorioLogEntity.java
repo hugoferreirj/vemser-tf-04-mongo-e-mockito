@@ -12,7 +12,7 @@ import org.springframework.data.annotation.Id;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class RelatorioLog {
+public class RelatorioLogEntity {
     @Id
     private Descricao descricao;
     private Integer quantidade;
