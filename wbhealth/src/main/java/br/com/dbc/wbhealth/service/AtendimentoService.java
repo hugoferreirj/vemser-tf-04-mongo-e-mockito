@@ -12,6 +12,7 @@ import br.com.dbc.wbhealth.model.enumarator.TipoDeAtendimento;
 import br.com.dbc.wbhealth.repository.AtendimentoRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,8 +27,6 @@ import java.util.stream.Collectors;
 public class AtendimentoService {
 
     private final AtendimentoRepository atendimentoRepository;
-
-    private final ObjectMapper objectMapper;
 
     private final PacienteService pacienteService;
 
@@ -147,7 +146,9 @@ public class AtendimentoService {
     }
 
     private AtendimentoOutputDTO convertToOutputDTO(AtendimentoEntity entity) {
-        AtendimentoOutputDTO atendimentoOutputDTO = objectMapper.convertValue(entity, AtendimentoOutputDTO.class);
+        AtendimentoOutputDTO atendimentoOutputDTO = new AtendimentoOutputDTO();
+        BeanUtils.copyProperties(entity, atendimentoOutputDTO);
+        atendimentoOutputDTO.setTipoDeAtendimento(entity.getTipoDeAtendimento().name());
         return setFKInAtendimentoDTO(atendimentoOutputDTO, entity);
     }
 
