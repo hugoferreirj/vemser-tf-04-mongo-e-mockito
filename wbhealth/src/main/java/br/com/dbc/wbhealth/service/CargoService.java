@@ -13,8 +13,7 @@ public class CargoService {
 
     public CargoEntity findById(Integer idCargo) throws EntityNotFound {
         return cargoRepository.findById(idCargo)
-                .orElseThrow(() ->
-                        new EntityNotFound("Cargo não encontrado: " + idCargo));
+                .orElseThrow(() -> new EntityNotFound("Cargo não encontrado: " + idCargo));
     }
 
 }
