@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -24,7 +25,7 @@ class CargoServiceTest {
     private CargoRepository cargoRepository;
 
     @Test
-    public void encontrarCargoPorIdComSucesso() throws EntityNotFound {
+    public void testFindById() throws EntityNotFound {
         // Arrange
         CargoEntity cargoTeste = new CargoEntity();
         UsuarioEntity usuarioTeste = new UsuarioEntity();
@@ -45,7 +46,9 @@ class CargoServiceTest {
         CargoEntity cargoEncontrado = cargoService.findById(cargoTeste.getIdCargo());
 
         // Assert
+        verify(cargoRepository).findById(cargoTeste.getIdCargo());
         assertNotNull(cargoEncontrado);
+        assertDoesNotThrow(() -> new EntityNotFound("Cargo não encontrado: " + cargoTeste.getIdCargo()));
         assertEquals(cargoTeste, cargoEncontrado);
     }
 
