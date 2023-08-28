@@ -3,24 +3,20 @@ package br.com.dbc.wbhealth.service;
 import br.com.dbc.wbhealth.exceptions.BancoDeDadosException;
 import br.com.dbc.wbhealth.exceptions.EntityNotFound;
 import br.com.dbc.wbhealth.model.dto.hospital.HospitalOutputDTO;
-import br.com.dbc.wbhealth.model.dto.medico.MedicoInputDTO;
-import br.com.dbc.wbhealth.model.dto.medico.MedicoNovoOutputDTO;
-import br.com.dbc.wbhealth.model.dto.medico.MedicoOutputDTO;
+import br.com.dbc.wbhealth.model.dto.medico.*;
 import br.com.dbc.wbhealth.model.dto.usuario.UsuarioInputDTO;
 import br.com.dbc.wbhealth.model.dto.usuario.UsuarioOutputDTO;
 import br.com.dbc.wbhealth.model.entity.*;
+import br.com.dbc.wbhealth.repository.AtendimentoRepository;
 import br.com.dbc.wbhealth.repository.MedicoRepository;
 import br.com.dbc.wbhealth.repository.PessoaRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -32,7 +28,6 @@ import java.util.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
 class MedicoServiceTest {
 
     @InjectMocks
@@ -45,16 +40,11 @@ class MedicoServiceTest {
     @Mock
     UsuarioService usuarioService;
     @Mock
+    AtendimentoRepository atendimentoRepository;
+    @Mock
     HospitalService hospitalService;
-
     @Mock
     ObjectMapper objectMapper;
-
-
-    @BeforeEach
-    void setUp() {
-
-    }
 
     @Test
     public void testSave() throws BancoDeDadosException, EntityNotFound, MessagingException {
@@ -86,8 +76,6 @@ class MedicoServiceTest {
         MedicoNovoOutputDTO medicoNovoOutput = createMedicoNovoOutputDTO();
 
         when(objectMapper.convertValue(medicoEntity, MedicoNovoOutputDTO.class)).thenReturn(medicoNovoOutput);
-
-        // Chamar o método a ser testado
 
         MedicoNovoOutputDTO medicoNovoOutputDTO = medicoService.save(medicoInput);
 
@@ -155,7 +143,7 @@ class MedicoServiceTest {
 
         when(usuarioService.findByLogin(medicoEntity.getPessoa().getCpf())).thenReturn(Optional.of(usuarioEntity));
 
-        when(medicoRepository.findById(1)).thenReturn(Optional.of(medicoEntity));
+        when(medicoRepository.findById(idMedico)).thenReturn(Optional.of(medicoEntity));
 
         // Act
         medicoService.delete(idMedico);
@@ -170,7 +158,6 @@ class MedicoServiceTest {
         MedicoInputDTO medicoInput = createMedicoInputDTO();
 
         PessoaEntity pessoaEntity = createPessoaEntity();
-//        PessoaEntity pessoaModificada = createPessoaEntity();
         pessoaEntity.setIdPessoa(1);
 
         when(objectMapper.convertValue(medicoInput, PessoaEntity.class)).thenReturn(pessoaEntity);
@@ -191,6 +178,46 @@ class MedicoServiceTest {
 
         Assertions.assertNotNull(medicoUpdated);
         Assertions.assertEquals(medicoOutput, medicoUpdated);
+    }
+
+    @Test
+    public void generateMedicoAtendimentoTest() throws EntityNotFound {
+
+        Integer idMedico = 1;
+        MedicoEntity medicoEntity = createMedicoEntity();
+        medicoEntity.setIdMedico(idMedico);
+
+        when(medicoRepository.findById(idMedico)).thenReturn(Optional.of(medicoEntity));
+
+        Long quantidadeAtendimentos = 5L;
+
+        when(atendimentoRepository.countAtendimentosByMedicoAndDateRange(
+                any(), any(), any()
+        )).thenReturn(quantidadeAtendimentos);
+
+        List<MedicoAtendimentoDTO> atendimento = List.of(
+                createMedicoAtendimentoDTOCreate(),
+                createMedicoAtendimentoDTOCreate(),
+                createMedicoAtendimentoDTOCreate(),
+                createMedicoAtendimentoDTOCreate(),
+                createMedicoAtendimentoDTOCreate()
+        );
+
+        LocalDate dataInicio = LocalDate.of(2023, 8, 26);
+        LocalDate dataFim = LocalDate.of(2023, 8, 28);
+
+        PeriodoDTO periodoDTO = new PeriodoDTO();
+        periodoDTO.setDataInicio(dataInicio);
+        periodoDTO.setDataFim(dataFim);
+
+        List<MedicoAtendimentoDTO> medicoAtendimentoOutput = medicoService.generateMedicoAtendimento(
+                1,
+                dataInicio,
+                dataFim
+                );
+
+        Assertions.assertNotNull(medicoAtendimentoOutput);
+
     }
 
     private static MedicoEntity createMedicoEntity() {
@@ -302,155 +329,11 @@ class MedicoServiceTest {
         return hospitalMock;
     }
 
-    private static HospitalOutputDTO createHospitalOutputDTO() {
-        HospitalOutputDTO hospitalOutput = new HospitalOutputDTO();
-        hospitalOutput.setIdHospital(1);
-        hospitalOutput.setNome("Hospital SMA");
+    private static MedicoAtendimentoDTO createMedicoAtendimentoDTOCreate() {
+        MedicoAtendimentoDTO medicoAtendimentoDTO = new MedicoAtendimentoDTO();
+        medicoAtendimentoDTO.setNomeMedico("maria");
+        medicoAtendimentoDTO.setCrm("AM-7654321/82");
 
-        return hospitalOutput;
+        return medicoAtendimentoDTO;
     }
-
 }
-
-
-//import br.com.dbc.wbhealth.exceptions.BancoDeDadosException;
-//import br.com.dbc.wbhealth.exceptions.EntityNotFound;
-//import br.com.dbc.wbhealth.model.dto.hospital.HospitalOutputDTO;
-//import br.com.dbc.wbhealth.model.dto.medico.MedicoInputDTO;
-//import br.com.dbc.wbhealth.model.dto.medico.MedicoNovoOutputDTO;
-//import br.com.dbc.wbhealth.model.dto.usuario.UsuarioOutputDTO;
-//import br.com.dbc.wbhealth.model.entity.HospitalEntity;
-//import br.com.dbc.wbhealth.model.entity.MedicoEntity;
-//import br.com.dbc.wbhealth.model.entity.PessoaEntity;
-//import br.com.dbc.wbhealth.repository.MedicoRepository;
-//import br.com.dbc.wbhealth.repository.PessoaRepository;
-//import com.fasterxml.jackson.databind.ObjectMapper;
-//import org.junit.jupiter.api.Assertions;
-//import org.junit.jupiter.api.Test;
-//import org.junit.jupiter.api.extension.ExtendWith;
-//import org.mockito.InjectMocks;
-//import org.mockito.Mock;
-//import org.mockito.junit.jupiter.MockitoExtension;
-//
-//import javax.mail.MessagingException;
-//import java.time.LocalDate;
-//import java.util.HashSet;
-//import java.util.Set;
-//
-//import static org.mockito.ArgumentMatchers.any;
-//import static org.mockito.Mockito.when;
-//
-//@ExtendWith(MockitoExtension.class)
-//class MedicoServiceTest {
-//
-//    @InjectMocks
-//    MedicoService medicoService;
-//    @Mock
-//    ObjectMapper objectMapper;
-//    @Mock
-//    MedicoRepository medicoRepository;
-//    @Mock
-//    PessoaRepository pessoaRepository;
-//    @Mock
-//    HospitalService hospitalService;
-//
-//
-//
-//    @Test
-//    public void criarMedicoNoBanco() throws EntityNotFound, BancoDeDadosException, MessagingException {
-//
-//        MedicoInputDTO medicoInput = new MedicoInputDTO();
-//        medicoInput.setNome("Maria");
-//        medicoInput.setCep("12345123");
-//        medicoInput.setDataNascimento(LocalDate.of(1995, 07, 15));
-//        medicoInput.setCpf("05281583093");
-//        medicoInput.setSalarioMensal(5000.0);
-//        medicoInput.setEmail("maria@email.com");
-//        medicoInput.setIdHospital(1);
-//        medicoInput.setCrm("AM-7654321/82");
-//
-//        PessoaEntity pessoaMock = new PessoaEntity();
-//        pessoaMock.setIdPessoa(1);
-//        pessoaMock.setNome(medicoInput.getNome());
-//        pessoaMock.setCep(medicoInput.getCep());
-//        pessoaMock.setDataNascimento(medicoInput.getDataNascimento());
-//        pessoaMock.setCpf(medicoInput.getCpf());
-//        pessoaMock.setSalarioMensal(medicoInput.getSalarioMensal());
-//        pessoaMock.setEmail(medicoInput.getEmail());
-//
-//        HospitalEntity hospitalMock = new HospitalEntity();
-//        hospitalMock.setIdHospital(1);
-//        hospitalMock.setNome("Hospital SMA");
-//
-//        MedicoEntity medicoMock = new MedicoEntity();
-//        medicoMock.setIdMedico(1);
-//        medicoMock.setCrm(medicoInput.getCrm());
-//        medicoMock.setPessoa(pessoaMock);
-//        medicoMock.setHospitalEntity(hospitalMock);
-//
-//        Set<Integer> cargos = new HashSet<>();
-//        cargos.add(4);
-//
-//        UsuarioOutputDTO usuarioMock = new UsuarioOutputDTO();
-//        usuarioMock.setIdUsuario("1");
-//        usuarioMock.setCargos(cargos);
-//        usuarioMock.setLogin(medicoInput.getCpf());
-//
-//        MedicoNovoOutputDTO medicoOutput = new MedicoNovoOutputDTO();
-//        medicoOutput.setIdMedico(medicoMock.getIdMedico());
-//        medicoOutput.setIdHospital(hospitalMock.getIdHospital());
-//        medicoOutput.setIdPessoa(pessoaMock.getIdPessoa());
-//        medicoOutput.setNome(medicoInput.getNome());
-//        medicoOutput.setCep(medicoInput.getCep());
-//        medicoOutput.setDataNascimento(medicoInput.getDataNascimento());
-//        medicoOutput.setCpf(medicoInput.getCpf());
-//        medicoOutput.setSalarioMensal(medicoInput.getSalarioMensal());
-//        medicoOutput.setEmail(medicoInput.getEmail());
-//        medicoOutput.setCrm(medicoInput.getCrm());
-//        medicoOutput.setUsuario(usuarioMock);
-//
-//        MedicoEntity medicoTeste = medicoService.convertInputToMedico(pessoaMock, medicoInput);
-//
-//        // ACT
-////        when(hospitalService.save(any())).thenReturn(objectMapper.convertValue(hospitalMock, HospitalOutputDTO.class));
-////        when(objectMapper.convertValue(medicoInput, PessoaEntity.class)).thenReturn(pessoaMock);
-//        when(pessoaRepository.save(any())).thenReturn(pessoaMock);
-//        when(medicoRepository.save(any())).thenReturn(medicoMock);
-//        when(medicoService.convertToMedicoNovoOutput(medicoMock, usuarioMock)).thenReturn(medicoOutput);
-//
-//        MedicoNovoOutputDTO medicoNovoOutput = medicoService.save(medicoTeste);
-//
-//        // ASSERT
-//        Assertions.assertNull(medicoNovoOutput);
-//        Assertions.assertEquals(medicoInput.getNome(), medicoNovoOutput.getNome());
-//        Assertions.assertEquals(medicoInput.getCep(), medicoNovoOutput.getCep());
-//        Assertions.assertEquals(medicoInput.getCpf(), medicoNovoOutput.getCpf());
-//        Assertions.assertEquals(medicoInput.getCrm(), medicoNovoOutput.getCrm());
-//        Assertions.assertEquals(medicoInput.getEmail(), medicoNovoOutput.getEmail());
-//        Assertions.assertEquals(1, medicoNovoOutput.getIdMedico());
-//        Assertions.assertEquals(1, medicoNovoOutput.getIdHospital());
-//        Assertions.assertEquals(1, medicoNovoOutput.getUsuario().getIdUsuario());
-//
-//    }
-//
-////    void converterMedicoOutput(MedicoOutputDTO medicoOutput, PessoaEntity pessoa) {
-////        medicoOutput.setNome(pessoa.getNome());
-////        medicoOutput.setCep(pessoa.getCep());
-////        medicoOutput.setDataNascimento(pessoa.getDataNascimento());
-////        medicoOutput.setCpf(pessoa.getCpf());
-////        medicoOutput.setSalarioMensal(pessoa.getSalarioMensal());
-////        medicoOutput.setEmail(pessoa.getEmail());
-////        medicoOutput.setIdPessoa(pessoa.getIdPessoa());
-////
-////    }
-////
-////    MedicoNovoOutputDTO convertToMedicoNovoOutput(MedicoEntity medico, UsuarioOutputDTO usuario) {
-////        MedicoNovoOutputDTO medicoNovoOutput = objectMapper.convertValue(medico, MedicoNovoOutputDTO.class);
-////
-////        medicoNovoOutput.setIdHospital(1);
-////        converterMedicoOutput(medicoNovoOutput, medico.getPessoa());
-////        medicoNovoOutput.setUsuario(usuario);
-////
-////        return medicoNovoOutput;
-////    }
-//}
