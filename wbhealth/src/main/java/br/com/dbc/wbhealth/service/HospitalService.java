@@ -74,22 +74,22 @@ public class HospitalService {
     public Page<HospitalAtendimentoDTO> findHospitaisWithAllAtendimentos(Integer pagina, Integer quantidadeRegistros) {
         Sort ordenacao = Sort.by("idHospital");
         Pageable pageable = PageRequest.of(pagina, quantidadeRegistros, ordenacao);
-        Page<HospitalEntity> pacientesPaginados = hospitalRepository.findAll(pageable);
+        Page<HospitalEntity> hospitaisPaginados = hospitalRepository.findAll(pageable);
 
-        return pacientesPaginados.map(this::convertToHospitalAtendimentosDTO);
+        return hospitaisPaginados.map(this::convertToHospitalAtendimentosDTO);
     }
 
     private HospitalAtendimentoDTO convertToHospitalAtendimentosDTO(HospitalEntity hospital){
-        HospitalAtendimentoDTO pacienteAtendimentosOutput = new HospitalAtendimentoDTO();
+        HospitalAtendimentoDTO hospitalAtendimentosOutput = new HospitalAtendimentoDTO();
 
-        pacienteAtendimentosOutput.setIdHospital(hospital.getIdHospital());
-        pacienteAtendimentosOutput.setNome(hospital.getNome());
+        hospitalAtendimentosOutput.setIdHospital(hospital.getIdHospital());
+        hospitalAtendimentosOutput.setNome(hospital.getNome());
 
         List<AtendimentoOutputDTO> atendimentosOutput = hospital.getAtendimentos().stream()
                 .map(this::convertAtendimentoToOutput).toList();
-        pacienteAtendimentosOutput.setAtendimentos(atendimentosOutput);
+        hospitalAtendimentosOutput.setAtendimentos(atendimentosOutput);
 
-        return pacienteAtendimentosOutput;
+        return hospitalAtendimentosOutput;
     }
 
     private AtendimentoOutputDTO convertAtendimentoToOutput(AtendimentoEntity atendimento) {
