@@ -12,7 +12,6 @@ import br.com.dbc.wbhealth.model.entity.PacienteEntity;
 import br.com.dbc.wbhealth.model.enumarator.TipoDeAtendimento;
 import br.com.dbc.wbhealth.repository.HospitalRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.hibernate.result.Output;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +20,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
-import org.springframework.data.support.PageableExecutionUtils;
 
 import java.time.LocalDate;
 import java.util.*;
