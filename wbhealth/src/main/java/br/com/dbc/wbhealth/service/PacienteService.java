@@ -108,20 +108,12 @@ public class PacienteService {
     }
 
     private PessoaEntity convertInputToPessoa(PacienteInputDTO pacienteInput){
-        PessoaEntity pessoa = new PessoaEntity();
-
-        pessoa.setNome(pacienteInput.getNome());
-        pessoa.setCep(pacienteInput.getCep());
-        pessoa.setDataNascimento(pacienteInput.getDataNascimento());
-        pessoa.setCpf(pacienteInput.getCpf());
-        pessoa.setEmail(pacienteInput.getEmail());
-
-        return pessoa;
+        return objectMapper.convertValue(pacienteInput, PessoaEntity.class);
     }
 
     private PacienteEntity convertInputToPaciente(PessoaEntity pessoa, PacienteInputDTO pacienteInput)
             throws EntityNotFound {
-        PacienteEntity paciente = new PacienteEntity();
+        PacienteEntity paciente = objectMapper.convertValue(pacienteInput, PacienteEntity.class);
         paciente.setPessoa(pessoa);
 
         HospitalEntity hospital = hospitalService.getHospitalById(pacienteInput.getIdHospital());
@@ -159,9 +151,9 @@ public class PacienteService {
     }
 
     private PacienteAtendimentosOutputDTO convertToPacienteAtendimentosOutput(PacienteEntity paciente){
-        PacienteAtendimentosOutputDTO pacienteAtendimentosOutput = new PacienteAtendimentosOutputDTO();
+        PacienteAtendimentosOutputDTO pacienteAtendimentosOutput =
+                objectMapper.convertValue(paciente, PacienteAtendimentosOutputDTO.class);
 
-        pacienteAtendimentosOutput.setIdPaciente(paciente.getIdPaciente());
         pacienteAtendimentosOutput.setNome(paciente.getPessoa().getNome());
 
         List<AtendimentoOutputDTO> atendimentosOutput = paciente.getAtendimentos().stream()
@@ -172,15 +164,13 @@ public class PacienteService {
     }
 
     private AtendimentoOutputDTO convertAtendimentoToOutput(AtendimentoEntity atendimento) {
-        AtendimentoOutputDTO atendimentoOutputDTO = new AtendimentoOutputDTO();
-        atendimentoOutputDTO.setIdAtendimento(atendimento.getIdAtendimento());
+        AtendimentoOutputDTO atendimentoOutputDTO =
+                objectMapper.convertValue(atendimento, AtendimentoOutputDTO.class);
+
         atendimentoOutputDTO.setIdHospital(atendimento.getHospitalEntity().getIdHospital());
         atendimentoOutputDTO.setIdPaciente(atendimento.getPacienteEntity().getIdPaciente());
         atendimentoOutputDTO.setIdMedico(atendimento.getMedicoEntity().getIdMedico());
-        atendimentoOutputDTO.setLaudo(atendimento.getLaudo());
-        atendimentoOutputDTO.setValorDoAtendimento(atendimento.getValorDoAtendimento());
         atendimentoOutputDTO.setTipoDeAtendimento(atendimento.getTipoDeAtendimento().name());
-        atendimentoOutputDTO.setDataAtendimento(atendimento.getDataAtendimento());
 
         return atendimentoOutputDTO;
     }

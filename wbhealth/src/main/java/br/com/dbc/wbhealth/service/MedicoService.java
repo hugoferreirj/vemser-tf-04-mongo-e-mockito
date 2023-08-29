@@ -63,7 +63,7 @@ public class MedicoService {
         MedicoEntity medico = convertInputToMedico(pessoaCriada, medicoInputDTO);
         MedicoEntity medicoCriado = medicoRepository.save(medico);
 
-        emailService.enviarEmailUsuarioCriado(medicoCriado.getPessoa(), usuarioInput, "MEDICO");
+//        emailService.enviarEmailUsuarioCriado(medicoCriado.getPessoa(), usuarioInput, "MEDICO");
 
         return convertToMedicoNovoOutput(medicoCriado, usuarioOutput);
     }
@@ -105,14 +105,7 @@ public class MedicoService {
     }
 
     private PessoaEntity convertInputToPessoa(MedicoInputDTO medicoInput){
-        return new PessoaEntity(
-                medicoInput.getNome(),
-                medicoInput.getCep(),
-                medicoInput.getDataNascimento(),
-                medicoInput.getCpf(),
-                medicoInput.getSalarioMensal(),
-                medicoInput.getEmail()
-        );
+        return objectMapper.convertValue(medicoInput, PessoaEntity.class);
 
     }
 

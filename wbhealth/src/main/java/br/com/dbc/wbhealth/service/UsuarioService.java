@@ -3,14 +3,22 @@ package br.com.dbc.wbhealth.service;
 import br.com.dbc.wbhealth.exceptions.EntityNotFound;
 import br.com.dbc.wbhealth.exceptions.RegraDeNegocioException;
 import br.com.dbc.wbhealth.model.dto.usuario.UsuarioInputDTO;
+import br.com.dbc.wbhealth.model.dto.usuario.UsuarioLoginInputDTO;
 import br.com.dbc.wbhealth.model.dto.usuario.UsuarioOutputDTO;
 import br.com.dbc.wbhealth.model.dto.usuario.UsuarioSenhaInputDTO;
 import br.com.dbc.wbhealth.model.entity.CargoEntity;
 import br.com.dbc.wbhealth.model.entity.UsuarioEntity;
+import br.com.dbc.wbhealth.model.enumarator.Descricao;
 import br.com.dbc.wbhealth.repository.UsuarioRepository;
+import br.com.dbc.wbhealth.security.TokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,6 +35,7 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
     private final CargoService cargoService;
     private final ObjectMapper objectMapper;
+    private final LogService logService;
 
     public UsuarioEntity findById(Integer idUsuario) throws EntityNotFound {
         return usuarioRepository.findById(idUsuario)
@@ -41,9 +50,9 @@ public class UsuarioService {
         String idEmString = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Integer idUsuario;
 
-        try{
+        try {
             idUsuario = Integer.parseInt(idEmString);
-        }catch (NumberFormatException e){
+        } catch (NumberFormatException e) {
             throw new RegraDeNegocioException("Não existe nenhum usuário logado");
         }
 
@@ -53,6 +62,26 @@ public class UsuarioService {
     public UsuarioOutputDTO getLoggedUser() throws RegraDeNegocioException, EntityNotFound {
         UsuarioEntity usuario = findById(getIdLoggedUser());
         return convertUsuarioToOutput(usuario);
+    }
+
+    public String login(UsuarioLoginInputDTO usuarioLoginInput,
+                        AuthenticationManager authenticationManager,
+                        TokenService tokenService) throws RegraDeNegocioException {
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(usuarioLoginInput.getLogin(), usuarioLoginInput.getSenha());
+
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(authenticationToken);
+        } catch (AuthenticationException e) {
+            throw new RegraDeNegocioException("Usuário ou senha inválidos");
+        }
+
+        UsuarioEntity usuarioValidado = (UsuarioEntity) authentication.getPrincipal();
+        String tokenGerado = tokenService.generateToken(usuarioValidado);
+
+        logService.create(Descricao.LOGIN, usuarioValidado.getIdUsuario());
+        return tokenGerado;
     }
 
     public UsuarioOutputDTO create(UsuarioInputDTO usuarioInput) throws EntityNotFound, RegraDeNegocioException {
@@ -65,6 +94,7 @@ public class UsuarioService {
         UsuarioEntity usuarioEntity = convertInputToUsuario(usuarioInput);
         usuarioEntity.setSenha(senhaCriptografada);
 
+        logService.create(Descricao.CREATE, getIdLoggedUser());
         return convertUsuarioToOutput(usuarioRepository.save(usuarioEntity));
     }
 
@@ -72,7 +102,7 @@ public class UsuarioService {
         try {
             UsuarioEntity usuarioDesatualizado = findById(idUsuario);
             if (usuarioRepository.existsByLogin(usuarioInput.getLogin())) {
-                if (usuarioDesatualizado.getLogin() != usuarioInput.getLogin()) {
+                if (!usuarioDesatualizado.getLogin().equals(usuarioInput.getLogin())) {
                     throw new RegraDeNegocioException("Nome de usuário é utilizado por outro usuário.");
                 }
             }
@@ -84,6 +114,7 @@ public class UsuarioService {
 
             UsuarioEntity usuarioAtualizado = usuarioRepository.save(usuarioDesatualizado);
 
+            logService.create(Descricao.UPDATE, getIdLoggedUser());
             return convertUsuarioToOutput(usuarioAtualizado);
         } catch (RegraDeNegocioException e) {
             throw new RuntimeException(e);
@@ -95,11 +126,13 @@ public class UsuarioService {
         String senhaCriptografada = passwordEncoder.encode(usuarioSenhaInput.getSenha());
         usuarioParaEditar.setSenha(senhaCriptografada);
         usuarioRepository.save(usuarioParaEditar);
+        logService.create(Descricao.UPDATE, getIdLoggedUser());
     }
 
     public void remove(Integer idUsuario) throws EntityNotFound {
         UsuarioEntity usuario = findById(idUsuario);
         usuarioRepository.delete(usuario);
+        logService.create(Descricao.DELETE, getIdLoggedUser());
     }
 
     public UsuarioEntity convertInputToUsuario(UsuarioInputDTO usuarioInputDTO) throws EntityNotFound {
@@ -119,20 +152,25 @@ public class UsuarioService {
     public UsuarioOutputDTO convertUsuarioToOutput(UsuarioEntity entity) {
         UsuarioOutputDTO usuarioOutputDTO = objectMapper.convertValue(entity, UsuarioOutputDTO.class);
         Set<Integer> cargos = new HashSet<>();
-        for (CargoEntity cargo : entity.getCargos()) {
-            cargos.add(cargo.getIdCargo());
+
+        if (entity.getCargos() != null) {
+            for (CargoEntity cargo : entity.getCargos()) {
+                if (cargo != null) {
+                    cargos.add(cargo.getIdCargo());
+                }
+            }
         }
         usuarioOutputDTO.setCargos(cargos);
         return usuarioOutputDTO;
     }
 
-    public String generateRandomPassword(){
+    public String generateRandomPassword() {
         Random random = new Random();
         Integer randomNumber = random.nextInt(1000, 9999);
         return String.valueOf(randomNumber);
     }
 
-    protected UsuarioInputDTO criarUsuarioInput(String login, Integer cargo){
+    protected UsuarioInputDTO criarUsuarioInput(String login, Integer cargo) {
         UsuarioInputDTO usuarioInput = new UsuarioInputDTO();
 
         usuarioInput.setLogin(login);
@@ -142,6 +180,4 @@ public class UsuarioService {
 
         return usuarioInput;
     }
-
 }
-
