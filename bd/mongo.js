@@ -1,3 +1,0 @@
--- Criar DB
-
-use wbhealth
