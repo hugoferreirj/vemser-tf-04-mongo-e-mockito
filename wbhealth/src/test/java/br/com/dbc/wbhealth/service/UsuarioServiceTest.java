@@ -5,6 +5,7 @@ import br.com.dbc.wbhealth.exceptions.RegraDeNegocioException;
 import br.com.dbc.wbhealth.model.dto.usuario.UsuarioInputDTO;
 import br.com.dbc.wbhealth.model.dto.usuario.UsuarioLoginInputDTO;
 import br.com.dbc.wbhealth.model.dto.usuario.UsuarioOutputDTO;
+import br.com.dbc.wbhealth.model.dto.usuario.UsuarioSenhaInputDTO;
 import br.com.dbc.wbhealth.model.entity.CargoEntity;
 import br.com.dbc.wbhealth.model.entity.UsuarioEntity;
 import br.com.dbc.wbhealth.model.enumarator.Descricao;
@@ -12,6 +13,7 @@ import br.com.dbc.wbhealth.repository.UsuarioRepository;
 import br.com.dbc.wbhealth.security.TokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,7 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -51,8 +53,12 @@ class UsuarioServiceTest {
     static UsuarioInputDTO usuarioInput = new UsuarioInputDTO();
     static UsuarioOutputDTO usuarioOutput = new UsuarioOutputDTO();
     static CargoEntity cargo = new CargoEntity();
-//    CargoEntity cargo2 = new CargoEntity();
 
+    @BeforeEach
+    private void setUp() {
+        Authentication auth = new UsernamePasswordAuthenticationToken("1", null);
+        SecurityContextHolder.getContext().setAuthentication(auth);
+    }
 
     @Test
     public void testFindById() throws EntityNotFound {
@@ -84,9 +90,6 @@ class UsuarioServiceTest {
 
     @Test
     public void testGetIdLoggedUser() throws RegraDeNegocioException {
-        // Simular autenticação do usuário
-        Authentication auth = new UsernamePasswordAuthenticationToken("1", null);
-        SecurityContextHolder.getContext().setAuthentication(auth);
 
         Integer idUsuario = usuarioService.getIdLoggedUser();
 
@@ -132,9 +135,144 @@ class UsuarioServiceTest {
 
         String tokenRetornado = usuarioService.login(usuarioLoginInputDTO, authenticationManager, tokenService);
 
+        Assertions.assertNotNull(tokenRetornado);
         Assertions.assertEquals(tokenRetornado, tokenGerado);
-
         verify(logService).create(Descricao.LOGIN, usuarioValidado.getIdUsuario());
+    }
+
+    @Test
+    public void testCreate() throws EntityNotFound, RegraDeNegocioException {
+        UsuarioEntity usuarioEntity = createUsuarioEntity();
+        UsuarioInputDTO usuarioInput = createUsuarioInputDTO();
+        UsuarioOutputDTO usuarioOutput = createUsuarioOutputDTO();
+        UsuarioEntity usuarioRetornado = createUsuarioEntity();
+
+        when(usuarioRepository.existsByLogin(usuarioInput.getLogin())).thenReturn(false);
+
+        when(objectMapper.convertValue(usuarioInput, UsuarioEntity.class)).thenReturn(usuarioEntity);
+
+        String senhaCriptografada = "senhaCriptografada";
+        when(passwordEncoder.encode(usuarioInput.getSenha())).thenReturn(senhaCriptografada);
+
+        when(usuarioRepository.save(usuarioEntity)).thenReturn(usuarioRetornado);
+        when(objectMapper.convertValue(usuarioEntity, UsuarioOutputDTO.class)).thenReturn(usuarioOutput);
+
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn("1");
+
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+
+        SecurityContextHolder.setContext(securityContext);
+
+        UsuarioOutputDTO usuarioCreated = usuarioService.create(usuarioInput);
+
+        Assertions.assertNotNull(usuarioCreated);
+        Assertions.assertEquals(usuarioEntity.getLogin(), usuarioCreated.getLogin());
+
+        verify(logService).create(Descricao.CREATE, 1);
+        verify(passwordEncoder).encode(usuarioInput.getSenha());
+    }
+
+    @Test
+    public void testUpdate() throws EntityNotFound {
+
+        Integer idUsuario = 1;
+        UsuarioInputDTO usuarioInput = createUsuarioInputDTO();
+        UsuarioOutputDTO usuarioOutput = createUsuarioOutputDTO();
+        UsuarioEntity usuarioEntity = createUsuarioEntity();
+        UsuarioEntity usuarioAtualizado = createUsuarioEntity();
+
+        when(usuarioRepository.findById(idUsuario)).thenReturn(Optional.of(usuarioEntity));
+        when(usuarioRepository.existsByLogin(usuarioInput.getLogin())).thenReturn(false);
+        when(objectMapper.convertValue(usuarioInput, UsuarioEntity.class)).thenReturn(usuarioEntity);
+
+        String senhaCriptografada = "senhaCriptografada";
+        when(passwordEncoder.encode(usuarioInput.getSenha())).thenReturn(senhaCriptografada);
+
+        when(usuarioRepository.save(usuarioEntity)).thenReturn(usuarioAtualizado);
+        when(objectMapper.convertValue(usuarioEntity, UsuarioOutputDTO.class)).thenReturn(usuarioOutput);
+
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn("1");
+
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+
+        SecurityContextHolder.setContext(securityContext);
+
+        UsuarioOutputDTO usuarioUpdated = usuarioService.update(idUsuario, usuarioInput);
+
+        Assertions.assertEquals(usuarioEntity.getLogin(), usuarioUpdated.getLogin());
+
+        verify(usuarioRepository).save(usuarioEntity);
+        verify(logService).create(Descricao.UPDATE, 1);
+        verify(passwordEncoder).encode(usuarioInput.getSenha());
+    }
+
+    @Test
+    public void testUpdatePassword() throws EntityNotFound, RegraDeNegocioException {
+        Integer idUsuario = 1;
+
+        UsuarioEntity usuarioEntity = createUsuarioEntity();
+        when(usuarioRepository.findById(idUsuario)).thenReturn(Optional.of(usuarioEntity));
+
+        String encodedPassword = "encodedPassword";
+        when(passwordEncoder.encode(anyString())).thenReturn(encodedPassword);
+
+        UsuarioSenhaInputDTO usuarioSenhaInputDTO = new UsuarioSenhaInputDTO();
+        usuarioSenhaInputDTO.setSenha("newPassword");
+        usuarioService.updatePassword(usuarioSenhaInputDTO);
+
+        Assertions.assertEquals(encodedPassword, usuarioEntity.getSenha(), "Encoded password should be set to the user entity");
+        Assertions.assertEquals("newPassword", usuarioSenhaInputDTO.getSenha(), "Password in the input DTO should remain unchanged");
+
+        verify(usuarioRepository).save(usuarioEntity);
+        verify(logService).create(Descricao.UPDATE, idUsuario);
+    }
+
+    @Test
+    public void testRemove() throws EntityNotFound {
+        Integer idUsuario = 1;
+        UsuarioEntity usuarioEntity = createUsuarioEntity();
+        when(usuarioRepository.findById(1)).thenReturn(Optional.of(usuarioEntity));
+
+        usuarioService.remove(1);
+
+        verify(usuarioRepository).delete(usuarioEntity);
+
+        verify(logService).create(Descricao.DELETE, idUsuario);
+    }
+
+    @Test
+    public void testGenerateRandomPassword() {
+        String randomPassword = usuarioService.generateRandomPassword();
+
+        Assertions.assertEquals(4, randomPassword.length(), "Generated password should have 4 digits");
+
+        try {
+            Integer.parseInt(randomPassword);
+        } catch (NumberFormatException e) {
+            Assertions.fail("Generated password should be a valid integer");
+        }
+
+        int generatedNumber = Integer.parseInt(randomPassword);
+        Assertions.assertTrue(generatedNumber >= 1000
+                && generatedNumber <= 9999, "Generated password should be between 1000 and 9999");
+    }
+
+    @Test
+    public void testCriarUsuarioInput() {
+        String login = "testUser";
+        Integer cargo = 1;
+
+        UsuarioInputDTO usuarioInput = usuarioService.criarUsuarioInput(login, cargo);
+
+        Assertions.assertEquals(login, usuarioInput.getLogin(), "Generated login should match the input login");
+
+        Assertions.assertNotNull(usuarioInput.getSenha(), "Generated password should not be null");
+        Assertions.assertFalse(usuarioInput.getSenha().isEmpty(), "Generated password should not be empty");
+        Assertions.assertTrue(usuarioInput.getCargos().contains(cargo), "Generated UsuarioInputDTO should contain the specified cargo");
     }
 
     private static UsuarioEntity createUsuarioEntity() {
