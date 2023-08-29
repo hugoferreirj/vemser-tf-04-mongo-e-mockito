@@ -18,6 +18,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -49,9 +50,9 @@ public class UsuarioService {
         String idEmString = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Integer idUsuario;
 
-        try{
+        try {
             idUsuario = Integer.parseInt(idEmString);
-        }catch (NumberFormatException e){
+        } catch (NumberFormatException e) {
             throw new RegraDeNegocioException("Não existe nenhum usuário logado");
         }
 
@@ -70,7 +71,7 @@ public class UsuarioService {
                 new UsernamePasswordAuthenticationToken(usuarioLoginInput.getLogin(), usuarioLoginInput.getSenha());
 
         Authentication authentication;
-        try{
+        try {
             authentication = authenticationManager.authenticate(authenticationToken);
         } catch (AuthenticationException e) {
             throw new RegraDeNegocioException("Usuário ou senha inválidos");
@@ -151,20 +152,25 @@ public class UsuarioService {
     public UsuarioOutputDTO convertUsuarioToOutput(UsuarioEntity entity) {
         UsuarioOutputDTO usuarioOutputDTO = objectMapper.convertValue(entity, UsuarioOutputDTO.class);
         Set<Integer> cargos = new HashSet<>();
-        for (CargoEntity cargo : entity.getCargos()) {
-            cargos.add(cargo.getIdCargo());
+
+        if (entity.getCargos() != null) {
+            for (CargoEntity cargo : entity.getCargos()) {
+                if (cargo != null) {
+                    cargos.add(cargo.getIdCargo());
+                }
+            }
         }
         usuarioOutputDTO.setCargos(cargos);
         return usuarioOutputDTO;
     }
 
-    public String generateRandomPassword(){
+    public String generateRandomPassword() {
         Random random = new Random();
         Integer randomNumber = random.nextInt(1000, 9999);
         return String.valueOf(randomNumber);
     }
 
-    protected UsuarioInputDTO criarUsuarioInput(String login, Integer cargo){
+    protected UsuarioInputDTO criarUsuarioInput(String login, Integer cargo) {
         UsuarioInputDTO usuarioInput = new UsuarioInputDTO();
 
         usuarioInput.setLogin(login);
@@ -174,6 +180,4 @@ public class UsuarioService {
 
         return usuarioInput;
     }
-
 }
-
