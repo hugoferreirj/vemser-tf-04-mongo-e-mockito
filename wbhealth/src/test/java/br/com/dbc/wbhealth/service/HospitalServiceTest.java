@@ -1,7 +1,10 @@
 package br.com.dbc.wbhealth.service;
 
+import br.com.dbc.wbhealth.exceptions.BancoDeDadosException;
 import br.com.dbc.wbhealth.exceptions.EntityNotFound;
+import br.com.dbc.wbhealth.model.dto.atendimento.AtendimentoMedicoDTO;
 import br.com.dbc.wbhealth.model.dto.atendimento.AtendimentoOutputDTO;
+import br.com.dbc.wbhealth.model.dto.atendimento.AtendimentoPacienteDTO;
 import br.com.dbc.wbhealth.model.dto.hospital.HospitalAtendimentoDTO;
 import br.com.dbc.wbhealth.model.dto.hospital.HospitalInputDTO;
 import br.com.dbc.wbhealth.model.dto.hospital.HospitalOutputDTO;
@@ -45,10 +48,12 @@ class HospitalServiceTest {
         hospitalSimulado = new HospitalEntity();
         hospitalSimulado.setIdHospital(1);
         hospitalSimulado.setNome("Hospital Santa Maria");
+        hospitalSimulado.setCnpj("62728824000130");
 
         hospitalOutputSimulado = new HospitalOutputDTO();
         hospitalOutputSimulado.setIdHospital(1);
         hospitalOutputSimulado.setNome("Hospital Santa Maria");
+        hospitalOutputSimulado.setCnpj("62728824000130");
     }
 
     @AfterEach
@@ -93,10 +98,11 @@ class HospitalServiceTest {
     }
 
     @Test
-    void testSave() {
-        HospitalInputDTO hospitalInput = new HospitalInputDTO("Hospital Santa Maria");
+    void testSave() throws BancoDeDadosException {
+        HospitalInputDTO hospitalInput = new HospitalInputDTO("Hospital Santa Maria", "62728824000130");
         HospitalEntity hospitalSemId = new HospitalEntity();
         hospitalSemId.setNome(hospitalInput.getNome());
+        hospitalSemId.setCnpj(hospitalInput.getCnpj());
 
         when(objectMapper.convertValue(hospitalInput, HospitalEntity.class)).thenReturn(hospitalSemId);
         when(hospitalRepository.save(hospitalSemId)).thenReturn(hospitalSimulado);
@@ -113,14 +119,16 @@ class HospitalServiceTest {
     }
 
     @Test
-    void testUpdate() throws EntityNotFound {
-        HospitalInputDTO hospitalInput = new HospitalInputDTO("Hospital Santa Rita");
+    void testUpdate() throws EntityNotFound, BancoDeDadosException {
+        HospitalInputDTO hospitalInput = new HospitalInputDTO("Hospital Santa Rita", "62728824000130");
 
         HospitalEntity hospitalAtualizado = new HospitalEntity();
         hospitalAtualizado.setIdHospital(1);
         hospitalAtualizado.setNome("Hospital Santa Rita");
+        hospitalAtualizado.setCnpj("62728824000130");
 
         hospitalOutputSimulado.setNome("Hospital Santa Rita");
+        hospitalOutputSimulado.setCnpj("62728824000130");
 
         when(hospitalRepository.findById(hospitalSimulado.getIdHospital())).thenReturn(Optional.of(hospitalSimulado));
         when(hospitalRepository.save(hospitalSimulado)).thenReturn(hospitalAtualizado);
@@ -171,6 +179,7 @@ class HospitalServiceTest {
 
         hospitalComAtendimentos.setIdHospital(1);
         hospitalComAtendimentos.setNome("Hospital Santa Maria");
+        hospitalComAtendimentos.setCnpj("62728824000130");
         hospitalComAtendimentos.setAtendimentos(new HashSet<>(List.of(atendimentoSimulado)));
 
         List<HospitalEntity> hospitais = List.of(hospitalComAtendimentos);
@@ -184,6 +193,7 @@ class HospitalServiceTest {
 
         hospitalAtendimentoOutput.setIdHospital(1);
         hospitalAtendimentoOutput.setNome("Hospital Santa Maria");
+        hospitalAtendimentoOutput.setCnpj("62728824000130");
         hospitalAtendimentoOutput.setAtendimentos(List.of(atendimentoOutput));
 
         List<HospitalAtendimentoDTO> hospitais = List.of(hospitalAtendimentoOutput);
@@ -213,8 +223,8 @@ class HospitalServiceTest {
 
         atendimentoOutput.setIdAtendimento(1);
         atendimentoOutput.setIdHospital(1);
-        atendimentoOutput.setIdPaciente(1);
-        atendimentoOutput.setIdMedico(1);
+        atendimentoOutput.setPaciente(new AtendimentoPacienteDTO());
+        atendimentoOutput.setMedico(new AtendimentoMedicoDTO());
         atendimentoOutput.setDataAtendimento(LocalDate.now());
         atendimentoOutput.setLaudo("Dor de cabeça");
         atendimentoOutput.setTipoDeAtendimento(TipoDeAtendimento.CONSULTA.name());
