@@ -1,5 +1,6 @@
 package br.com.dbc.wbhealth.service;
 
+import br.com.dbc.wbhealth.exceptions.BancoDeDadosException;
 import br.com.dbc.wbhealth.exceptions.EntityNotFound;
 import br.com.dbc.wbhealth.model.dto.atendimento.AtendimentoOutputDTO;
 import br.com.dbc.wbhealth.model.dto.hospital.HospitalAtendimentoDTO;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -35,15 +37,23 @@ public class HospitalService {
         return convertToDTO(hospital);
     }
 
-    public HospitalOutputDTO save(HospitalInputDTO hospitalInputDTO) {
+    public HospitalOutputDTO save(HospitalInputDTO hospitalInputDTO) throws BancoDeDadosException {
+        if(hospitalRepository.existsByCnpj(hospitalInputDTO.getCnpj())){
+            throw new BancoDeDadosException("CNPJ já cadastrado.");
+        }
         HospitalEntity hospital = convertToEntity(hospitalInputDTO);
         HospitalEntity hospitalCadastrado = hospitalRepository.save(hospital);
         return convertToDTO(hospitalCadastrado);
     }
 
-    public HospitalOutputDTO update(Integer idHospital, HospitalInputDTO hospitalInputDTO) throws EntityNotFound {
+
+    public HospitalOutputDTO update(Integer idHospital, HospitalInputDTO hospitalInputDTO) throws EntityNotFound, BancoDeDadosException {
         HospitalEntity hospital = getHospitalById(idHospital);
+        if(!Objects.equals(hospital.getCnpj(), hospitalInputDTO.getCnpj()) && hospitalRepository.existsByCnpj(hospitalInputDTO.getCnpj())){
+            throw new BancoDeDadosException("CNPJ já cadastrado.");
+        }
         hospital.setNome(hospitalInputDTO.getNome());
+        hospital.setCnpj(hospitalInputDTO.getCnpj());
 
         hospitalRepository.save(hospital);
         return convertToDTO(hospital);
@@ -84,6 +94,7 @@ public class HospitalService {
 
         hospitalAtendimentosOutput.setIdHospital(hospital.getIdHospital());
         hospitalAtendimentosOutput.setNome(hospital.getNome());
+        hospitalAtendimentosOutput.setCnpj(hospital.getCnpj());
 
         List<AtendimentoOutputDTO> atendimentosOutput = hospital.getAtendimentos().stream()
                 .map(this::convertAtendimentoToOutput).toList();

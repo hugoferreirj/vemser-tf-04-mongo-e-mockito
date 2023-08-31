@@ -1,5 +1,6 @@
 package br.com.dbc.wbhealth.documentation;
 
+import br.com.dbc.wbhealth.exceptions.BancoDeDadosException;
 import br.com.dbc.wbhealth.exceptions.EntityNotFound;
 import br.com.dbc.wbhealth.model.dto.hospital.HospitalAtendimentoDTO;
 import br.com.dbc.wbhealth.model.dto.hospital.HospitalInputDTO;
@@ -67,18 +68,20 @@ public interface HospitalControllerDoc {
     @ApiResponses(
             value = {
                     @ApiResponse(responseCode = "201", description = "Cadastrado com sucesso!"),
+                    @ApiResponse(responseCode = "400", description = "Problema encontrado nos dados da requisição."),
                     @ApiResponse(responseCode = "403", description = "Você não tem permissão para acessar este recurso"),
                     @ApiResponse(responseCode = "500", description = "Foi gerada uma exceção")
             }
     )
     @PostMapping
     ResponseEntity<HospitalOutputDTO>
-    save(@Valid @RequestBody HospitalInputDTO hospital);
+    save(@Valid @RequestBody HospitalInputDTO hospital) throws BancoDeDadosException;
 
     @Operation(summary = "Alterar hospital", description = "Altera hospital com dados que sao repassados pela requisicao")
     @ApiResponses(
             value = {
                     @ApiResponse(responseCode = "200", description = "Atualizado com sucesso!"),
+                    @ApiResponse(responseCode = "400", description = "Problema encontrado nos dados da requisição."),
                     @ApiResponse(responseCode = "403", description = "Você não tem permissão para acessar este recurso"),
                     @ApiResponse(responseCode = "500", description = "Foi gerada uma exceção")
             }
@@ -86,7 +89,7 @@ public interface HospitalControllerDoc {
     @PutMapping("/{idHospital}")
     ResponseEntity<HospitalOutputDTO>
     update(@Positive @PathVariable Integer idHospital,
-           @Valid @RequestBody HospitalInputDTO hospital) throws EntityNotFound;
+           @Valid @RequestBody HospitalInputDTO hospital) throws EntityNotFound, BancoDeDadosException;
 
     @Operation(summary = "Deletar hospital", description = "Deleta o hospital pelo o seu id especifico")
     @ApiResponses(

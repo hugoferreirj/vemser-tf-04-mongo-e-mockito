@@ -6,5 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface HospitalRepository extends JpaRepository<HospitalEntity, Integer> {
+    Boolean existsByCnpj(String cnpj);
 
 }
