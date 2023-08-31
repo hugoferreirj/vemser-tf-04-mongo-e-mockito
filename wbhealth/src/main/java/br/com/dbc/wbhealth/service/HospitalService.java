@@ -1,7 +1,10 @@
 package br.com.dbc.wbhealth.service;
 
+import br.com.dbc.wbhealth.exceptions.BancoDeDadosException;
 import br.com.dbc.wbhealth.exceptions.EntityNotFound;
+import br.com.dbc.wbhealth.model.dto.atendimento.AtendimentoMedicoDTO;
 import br.com.dbc.wbhealth.model.dto.atendimento.AtendimentoOutputDTO;
+import br.com.dbc.wbhealth.model.dto.atendimento.AtendimentoPacienteDTO;
 import br.com.dbc.wbhealth.model.dto.hospital.HospitalAtendimentoDTO;
 import br.com.dbc.wbhealth.model.dto.hospital.HospitalInputDTO;
 import br.com.dbc.wbhealth.model.dto.hospital.HospitalOutputDTO;
@@ -17,6 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -35,15 +39,23 @@ public class HospitalService {
         return convertToDTO(hospital);
     }
 
-    public HospitalOutputDTO save(HospitalInputDTO hospitalInputDTO) {
+    public HospitalOutputDTO save(HospitalInputDTO hospitalInputDTO) throws BancoDeDadosException {
+        if (hospitalRepository.existsByCnpj(hospitalInputDTO.getCnpj())) {
+            throw new BancoDeDadosException("CNPJ já cadastrado.");
+        }
         HospitalEntity hospital = convertToEntity(hospitalInputDTO);
         HospitalEntity hospitalCadastrado = hospitalRepository.save(hospital);
         return convertToDTO(hospitalCadastrado);
     }
 
-    public HospitalOutputDTO update(Integer idHospital, HospitalInputDTO hospitalInputDTO) throws EntityNotFound {
+
+    public HospitalOutputDTO update(Integer idHospital, HospitalInputDTO hospitalInputDTO) throws EntityNotFound, BancoDeDadosException {
         HospitalEntity hospital = getHospitalById(idHospital);
+        if (!Objects.equals(hospital.getCnpj(), hospitalInputDTO.getCnpj()) && hospitalRepository.existsByCnpj(hospitalInputDTO.getCnpj())) {
+            throw new BancoDeDadosException("CNPJ já cadastrado.");
+        }
         hospital.setNome(hospitalInputDTO.getNome());
+        hospital.setCnpj(hospitalInputDTO.getCnpj());
 
         hospitalRepository.save(hospital);
         return convertToDTO(hospital);
@@ -79,11 +91,12 @@ public class HospitalService {
         return hospitaisPaginados.map(this::convertToHospitalAtendimentosDTO);
     }
 
-    private HospitalAtendimentoDTO convertToHospitalAtendimentosDTO(HospitalEntity hospital){
+    private HospitalAtendimentoDTO convertToHospitalAtendimentosDTO(HospitalEntity hospital) {
         HospitalAtendimentoDTO hospitalAtendimentosOutput = new HospitalAtendimentoDTO();
 
         hospitalAtendimentosOutput.setIdHospital(hospital.getIdHospital());
         hospitalAtendimentosOutput.setNome(hospital.getNome());
+        hospitalAtendimentosOutput.setCnpj(hospital.getCnpj());
 
         List<AtendimentoOutputDTO> atendimentosOutput = hospital.getAtendimentos().stream()
                 .map(this::convertAtendimentoToOutput).toList();
@@ -93,15 +106,19 @@ public class HospitalService {
     }
 
     private AtendimentoOutputDTO convertAtendimentoToOutput(AtendimentoEntity atendimento) {
-        AtendimentoOutputDTO atendimentoOutputDTO = new AtendimentoOutputDTO();
-        atendimentoOutputDTO.setIdAtendimento(atendimento.getIdAtendimento());
+        AtendimentoOutputDTO atendimentoOutputDTO = objectMapper.convertValue(atendimento, AtendimentoOutputDTO.class);
+
         atendimentoOutputDTO.setIdHospital(atendimento.getHospitalEntity().getIdHospital());
-        atendimentoOutputDTO.setIdPaciente(atendimento.getPacienteEntity().getIdPaciente());
-        atendimentoOutputDTO.setIdMedico(atendimento.getMedicoEntity().getIdMedico());
-        atendimentoOutputDTO.setLaudo(atendimento.getLaudo());
-        atendimentoOutputDTO.setValorDoAtendimento(atendimento.getValorDoAtendimento());
-        atendimentoOutputDTO.setTipoDeAtendimento(atendimento.getTipoDeAtendimento().name());
-        atendimentoOutputDTO.setDataAtendimento(atendimento.getDataAtendimento());
+
+        AtendimentoMedicoDTO medico = new AtendimentoMedicoDTO();
+        medico.setIdMedico(atendimento.getMedicoEntity().getIdMedico());
+        medico.setNomeMedico(atendimento.getMedicoEntity().getPessoa().getNome());
+        atendimentoOutputDTO.setMedico(medico);
+
+        AtendimentoPacienteDTO paciente = new AtendimentoPacienteDTO();
+        paciente.setIdPaciente(atendimento.getPacienteEntity().getIdPaciente());
+        paciente.setNomePaciente(atendimento.getPacienteEntity().getPessoa().getNome());
+        atendimentoOutputDTO.setPaciente(paciente);
 
         return atendimentoOutputDTO;
     }

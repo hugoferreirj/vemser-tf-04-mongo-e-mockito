@@ -1,6 +1,7 @@
 package br.com.dbc.wbhealth.controller;
 
 import br.com.dbc.wbhealth.documentation.HospitalControllerDoc;
+import br.com.dbc.wbhealth.exceptions.BancoDeDadosException;
 import br.com.dbc.wbhealth.exceptions.EntityNotFound;
 import br.com.dbc.wbhealth.model.dto.hospital.HospitalAtendimentoDTO;
 import br.com.dbc.wbhealth.model.dto.hospital.HospitalInputDTO;
@@ -49,13 +50,13 @@ public class HospitalController implements HospitalControllerDoc {
     }
 
     @PostMapping
-    public ResponseEntity<HospitalOutputDTO> save(@Valid @RequestBody HospitalInputDTO hospital) {
+    public ResponseEntity<HospitalOutputDTO> save(@Valid @RequestBody HospitalInputDTO hospital) throws BancoDeDadosException {
         return ResponseEntity.status(HttpStatus.CREATED).body(hospitalService.save(hospital));
     }
 
     @PutMapping("/{idHospital}")
     public ResponseEntity<HospitalOutputDTO> update(@Positive @PathVariable Integer idHospital, @Valid @RequestBody HospitalInputDTO hospital)
-            throws EntityNotFound {
+            throws EntityNotFound, BancoDeDadosException {
         return ResponseEntity.status(HttpStatus.OK).body(hospitalService.update(idHospital, hospital));
     }
 
