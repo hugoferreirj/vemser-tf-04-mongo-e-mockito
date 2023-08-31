@@ -165,9 +165,32 @@ public class UsuarioService {
     }
 
     public String generateRandomPassword() {
-        Random random = new Random();
-        Integer randomNumber = random.nextInt(1000, 9999);
-        return String.valueOf(randomNumber);
+        String senhaAleatoria = "";
+        String charMaiusculo = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String charMinusculo = "abcdefghijklmnopqrstuvwxyz";
+        String digito = "0123456789";
+        String caracteres = charMaiusculo + charMinusculo + digito;
+
+        senhaAleatoria += charMaiusculo.charAt((int) Math.floor(Math.random() * charMaiusculo.length()));
+        senhaAleatoria += charMinusculo.charAt((int) Math.floor(Math.random() * charMinusculo.length()));
+        senhaAleatoria += digito.charAt((int) Math.floor(Math.random() * digito.length()));
+
+        for (int i = 0; i <= 3; i++) {
+            senhaAleatoria += caracteres.charAt((int) Math.floor(Math.random() * caracteres.length()));
+        }
+
+        char[] senhaArray = senhaAleatoria.toCharArray();
+        for (int i = senhaArray.length - 1; i > 0; i--) {
+            int j = (int) Math.floor(Math.random() * (i + 1));
+            char temp = senhaArray[i];
+            senhaArray[i] = senhaArray[j];
+            senhaArray[j] = temp;
+        }
+
+        senhaAleatoria = new String(senhaArray);
+
+        return senhaAleatoria;
+
     }
 
     protected UsuarioInputDTO criarUsuarioInput(String login, Integer cargo) {

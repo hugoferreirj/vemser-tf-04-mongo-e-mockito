@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -246,19 +247,29 @@ class UsuarioServiceTest {
 
     @Test
     public void testGenerateRandomPassword() {
+
         String randomPassword = usuarioService.generateRandomPassword();
 
-        Assertions.assertEquals(4, randomPassword.length(), "Generated password should have 4 digits");
+        Assertions.assertEquals(7, randomPassword.length());
 
-        try {
-            Integer.parseInt(randomPassword);
-        } catch (NumberFormatException e) {
-            Assertions.fail("Generated password should be a valid integer");
+        int uppercaseCount = 0;
+        int lowercaseCount = 0;
+        int digitCount = 0;
+
+        for (char c : randomPassword.toCharArray()) {
+            if (Character.isUpperCase(c)) {
+                uppercaseCount++;
+            } else if (Character.isLowerCase(c)) {
+                lowercaseCount++;
+            } else if (Character.isDigit(c)) {
+                digitCount++;
+            }
         }
 
-        int generatedNumber = Integer.parseInt(randomPassword);
-        Assertions.assertTrue(generatedNumber >= 1000
-                && generatedNumber <= 9999, "Generated password should be between 1000 and 9999");
+        Assertions.assertTrue(uppercaseCount >= 1, "A senha gerada deve conter pelo menos uma letra maiúscula");
+        Assertions.assertTrue(lowercaseCount >= 1, "A senha gerada deve conter pelo menos uma letra minúscula");
+        Assertions.assertTrue(digitCount >= 1, "A senha gerada deve conter pelo menos um digito");
+
     }
 
     @Test
@@ -268,11 +279,11 @@ class UsuarioServiceTest {
 
         UsuarioInputDTO usuarioInput = usuarioService.criarUsuarioInput(login, cargo);
 
-        Assertions.assertEquals(login, usuarioInput.getLogin(), "Generated login should match the input login");
+        Assertions.assertEquals(login, usuarioInput.getLogin(), "O login gerado deve corresponder ao login de entrada");
 
-        Assertions.assertNotNull(usuarioInput.getSenha(), "Generated password should not be null");
-        Assertions.assertFalse(usuarioInput.getSenha().isEmpty(), "Generated password should not be empty");
-        Assertions.assertTrue(usuarioInput.getCargos().contains(cargo), "Generated UsuarioInputDTO should contain the specified cargo");
+        Assertions.assertNotNull(usuarioInput.getSenha(), "A senha gerada não deve ser nula");
+        Assertions.assertFalse(usuarioInput.getSenha().isEmpty(), "A senha gerada não deve estar vazia");
+        Assertions.assertTrue(usuarioInput.getCargos().contains(cargo), "O UsuarioInputDTO gerado deve conter o cargo especificado");
     }
 
     private static UsuarioEntity createUsuarioEntity() {
