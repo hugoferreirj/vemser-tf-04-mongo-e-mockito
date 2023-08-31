@@ -4,7 +4,6 @@ import br.com.dbc.wbhealth.documentation.AuthControllerDoc;
 import br.com.dbc.wbhealth.exceptions.EntityNotFound;
 import br.com.dbc.wbhealth.model.dto.usuario.*;
 import br.com.dbc.wbhealth.exceptions.RegraDeNegocioException;
-import br.com.dbc.wbhealth.security.AuthenticationService;
 import br.com.dbc.wbhealth.security.TokenService;
 import br.com.dbc.wbhealth.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
@@ -16,10 +15,10 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
-@RestController
 @Validated
-@RequiredArgsConstructor
+@RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthController implements AuthControllerDoc {
     private final AuthenticationManager authenticationManager;
     private final TokenService tokenService;
