@@ -4,7 +4,6 @@ import br.com.dbc.wbhealth.model.dto.log.LogOutputDTO;
 import br.com.dbc.wbhealth.model.entity.LogEntity;
 import br.com.dbc.wbhealth.model.enumarator.Descricao;
 import br.com.dbc.wbhealth.repository.LogRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.*;

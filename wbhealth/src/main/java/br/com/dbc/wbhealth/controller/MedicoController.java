@@ -25,8 +25,8 @@ import java.util.List;
 
 @Validated
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/medico")
+@RequiredArgsConstructor
 public class MedicoController implements MedicoControllerDoc {
 
     private final MedicoService medicoService;

@@ -7,6 +7,7 @@ import br.com.dbc.wbhealth.model.dto.hospital.HospitalAtendimentoDTO;
 import br.com.dbc.wbhealth.model.dto.hospital.HospitalInputDTO;
 import br.com.dbc.wbhealth.model.dto.hospital.HospitalOutputDTO;
 import br.com.dbc.wbhealth.service.HospitalService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,16 +19,12 @@ import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
+@Validated
 @RestController
 @RequestMapping("/hospital")
-@Validated
+@RequiredArgsConstructor
 public class HospitalController implements HospitalControllerDoc {
-
     private final HospitalService hospitalService;
-
-    public HospitalController(HospitalService hospitalService) {
-        this.hospitalService = hospitalService;
-    }
 
     @GetMapping
     public ResponseEntity<List<HospitalOutputDTO>> findAll() {
@@ -65,7 +62,5 @@ public class HospitalController implements HospitalControllerDoc {
         hospitalService.deleteById(idHospital);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
-
-
 
 }

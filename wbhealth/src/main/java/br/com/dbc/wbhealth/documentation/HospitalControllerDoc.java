@@ -52,7 +52,7 @@ public interface HospitalControllerDoc {
             value = {
                     @ApiResponse(responseCode = "200", description = "Retorna com sucesso"),
                     @ApiResponse(responseCode = "400", description = "Não foi possível buscar o hospital"),
-                    @ApiResponse(responseCode = "404", description = "HOspital não encontrado"),
+                    @ApiResponse(responseCode = "404", description = "Hospital não encontrado"),
                     @ApiResponse(responseCode = "403", description = "Você não tem permissão para acessar este recurso"),
                     @ApiResponse(responseCode = "500", description = "Foi gerada uma exceção")
             }

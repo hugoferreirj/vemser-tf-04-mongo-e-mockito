@@ -18,14 +18,12 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
 
 @Service
@@ -99,26 +97,25 @@ public class UsuarioService {
     }
 
     public UsuarioOutputDTO update(Integer idUsuario, UsuarioInputDTO usuarioInput) throws EntityNotFound {
-        try {
-            UsuarioEntity usuarioDesatualizado = findById(idUsuario);
-            if (usuarioRepository.existsByLogin(usuarioInput.getLogin())) {
-                if (!usuarioDesatualizado.getLogin().equals(usuarioInput.getLogin())) {
-                    throw new RegraDeNegocioException("Nome de usuário é utilizado por outro usuário.");
-                }
-            }
-            UsuarioEntity entity = convertInputToUsuario(usuarioInput);
-            String senhaCriptografada = passwordEncoder.encode(usuarioInput.getSenha());
-            entity.setSenha(senhaCriptografada);
+        UsuarioEntity usuarioDesatualizado = findById(idUsuario);
 
-            BeanUtils.copyProperties(entity, usuarioDesatualizado, "idUsuario");
+        boolean loginSeraAlterado = !(usuarioInput.getLogin().equals(usuarioDesatualizado.getLogin()));
+        boolean novoLoginJaExiste = usuarioRepository.existsByLogin(usuarioInput.getLogin());
 
-            UsuarioEntity usuarioAtualizado = usuarioRepository.save(usuarioDesatualizado);
-
-            logService.create(Descricao.UPDATE, getIdLoggedUser());
-            return convertUsuarioToOutput(usuarioAtualizado);
-        } catch (RegraDeNegocioException e) {
-            throw new RuntimeException(e);
+        if (loginSeraAlterado && novoLoginJaExiste) {
+            throw new RegraDeNegocioException("Nome de usuário é utilizado por outro usuário.");
         }
+
+        UsuarioEntity entity = convertInputToUsuario(usuarioInput);
+        String senhaCriptografada = passwordEncoder.encode(usuarioInput.getSenha());
+        entity.setSenha(senhaCriptografada);
+
+        BeanUtils.copyProperties(entity, usuarioDesatualizado, "idUsuario");
+
+        UsuarioEntity usuarioAtualizado = usuarioRepository.save(usuarioDesatualizado);
+
+        logService.create(Descricao.UPDATE, getIdLoggedUser());
+        return convertUsuarioToOutput(usuarioAtualizado);
     }
 
     public void updatePassword(UsuarioSenhaInputDTO usuarioSenhaInput) throws EntityNotFound, RegraDeNegocioException {
@@ -152,13 +149,8 @@ public class UsuarioService {
     public UsuarioOutputDTO convertUsuarioToOutput(UsuarioEntity entity) {
         UsuarioOutputDTO usuarioOutputDTO = objectMapper.convertValue(entity, UsuarioOutputDTO.class);
         Set<Integer> cargos = new HashSet<>();
-
-        if (entity.getCargos() != null) {
-            for (CargoEntity cargo : entity.getCargos()) {
-                if (cargo != null) {
-                    cargos.add(cargo.getIdCargo());
-                }
-            }
+        for (CargoEntity cargo : entity.getCargos()) {
+            cargos.add(cargo.getIdCargo());
         }
         usuarioOutputDTO.setCargos(cargos);
         return usuarioOutputDTO;
